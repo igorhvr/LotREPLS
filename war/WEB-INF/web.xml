@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>LotREPLs.html</welcome-file>
+  </welcome-file-list>
+  
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>lotreplsApi</servlet-name>
+    <servlet-class>com.google.lotrepls.server.LotREPLsApiImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>lotreplsApi</servlet-name>
+    <url-pattern>/lotrepls/api</url-pattern>
+  </servlet-mapping>
+
+</web-app>

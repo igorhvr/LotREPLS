@@ -1,0 +1,250 @@
+Index: src/org/python/core/packagecache/PathPackageManager.java
+===================================================================
+--- src/org/python/core/packagecache/PathPackageManager.java	(revision 5996)
++++ src/org/python/core/packagecache/PathPackageManager.java	(working copy)
+@@ -41,20 +41,24 @@
+             String dir = path.pyget(i).__str__().toString();
+ 
+             File f = new RelativeFile(dir, child);
+-            if (f.isDirectory() && imp.caseok(f, name)) {
+-                /*
+-                 * Figure out if we have a directory a mixture of python and
+-                 * java or just an empty directory (which means Java) or a
+-                 * directory with only Python source (which means Python).
+-                 */
+-                PackageExistsFileFilter m = new PackageExistsFileFilter();
+-                f.listFiles(m);
+-                boolean exists = m.packageExists();
+-                if (exists) {
+-                    Py.writeComment("import", "java package as '"
+-                            + f.getAbsolutePath() + "'");
++            try {
++                if (f.isDirectory() && imp.caseok(f, name)) {
++                    /*
++                     * Figure out if we have a directory a mixture of python and
++                     * java or just an empty directory (which means Java) or a
++                     * directory with only Python source (which means Python).
++                     */
++                    PackageExistsFileFilter m = new PackageExistsFileFilter();
++                    f.listFiles(m);
++                    boolean exists = m.packageExists();
++                    if (exists) {
++                        Py.writeComment("import", "java package as '"
++                                + f.getAbsolutePath() + "'");
++                    }
++                    return exists;
+                 }
+-                return exists;
++            } catch (SecurityException se) {
++                return false;
+             }
+         }
+         return false;
+Index: src/org/python/core/imp.java
+===================================================================
+--- src/org/python/core/imp.java	(revision 5996)
++++ src/org/python/core/imp.java	(working copy)
+@@ -176,6 +176,9 @@
+         }
+         FileOutputStream fop = null;
+         try {
++            SecurityManager man = System.getSecurityManager();
++            if (man != null)
++                man.checkWrite(compiledFilename);
+             fop = new FileOutputStream(compiledFilename);
+             fop.write(compiledSource);
+             fop.close();
+@@ -185,6 +188,11 @@
+             Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '"
+                     + compiledFilename + "' due to " + exc);
+             return null;
++        } catch(SecurityException exc) {
++            // If we can't write the cache file, just log and continue
++            Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '"
++                    + compiledFilename + "' due to " + exc);
++            return null;
+         } finally {
+             if(fop != null) {
+                 try {
+@@ -416,8 +424,12 @@
+         File sourceFile = new File(dir, sourceName);
+         File compiledFile = new File(dir, compiledName);
+ 
+-        boolean pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
++        boolean pkg = false;
++        try {
++            pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
+                                                                  || compiledFile.isFile());
++        } catch (SecurityException e) {
++        }
+         if (!pkg) {
+             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
+             sourceName = name + ".py";
+@@ -432,28 +444,31 @@
+             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
+         }
+ 
+-        if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
+-            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+-                Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
+-                long pyTime = sourceFile.lastModified();
+-                long classTime = compiledFile.lastModified();
+-                if (classTime >= pyTime) {
+-                    PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
+-                                                     displaySourceName, displayCompiledName);
+-                    if (ret != null) {
+-                        return ret;
++        try {
++            if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
++                if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
++                    Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
++                    long pyTime = sourceFile.lastModified();
++                    long classTime = compiledFile.lastModified();
++                    if (classTime >= pyTime) {
++                        PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
++                                                         displaySourceName, displayCompiledName);
++                        if (ret != null) {
++                            return ret;
++                        }
+                     }
+                 }
++                return createFromSource(modName, makeStream(sourceFile), displaySourceName,
++                                        compiledFile.getPath());
+             }
+-            return createFromSource(modName, makeStream(sourceFile), displaySourceName,
+-                                    compiledFile.getPath());
+-        }
+ 
+-        // If no source, try loading precompiled
+-        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
+-        if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+-            return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
+-                                     displayCompiledName);
++            // If no source, try loading precompiled
++            Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
++            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
++                return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
++                                         displayCompiledName);
++            }
++        } catch (SecurityException e) {
+         }
+         return null;
+     }
+Index: src/org/python/core/SyspathJavaLoader.java
+===================================================================
+--- src/org/python/core/SyspathJavaLoader.java	(revision 5996)
++++ src/org/python/core/SyspathJavaLoader.java	(working copy)
+@@ -112,6 +112,8 @@
+         try {
+             return Class.forName(name, true, ClassLoader.getSystemClassLoader());
+         } catch(ClassNotFoundException e) {}
++        catch (SecurityException se) {
++        }
+ 
+         Class<?> c = findLoadedClass(name);
+         if(c != null) {
+@@ -143,11 +145,13 @@
+                 if (file == null) {
+                     continue;
+                 }
+-                size = (int)file.length();
+                 try {
++                    size = (int)file.length();
+                     fis = new FileInputStream(file);
+                 } catch (FileNotFoundException e) {
+                     continue;
++                } catch(SecurityException e) {
++                    continue;
+                 }
+             }
+             try {
+Index: src/org/python/core/PyTraceback.java
+===================================================================
+--- src/org/python/core/PyTraceback.java	(revision 5996)
++++ src/org/python/core/PyTraceback.java	(working copy)
+@@ -50,9 +50,13 @@
+      */
+     private String getLine(String filename, int lineno) {
+         RelativeFile file = new RelativeFile(filename);
+-        if (!file.isFile() || !file.canRead()) {
+-            // XXX: We should run through sys.path until the filename is found
+-            return null;
++        try {
++            if (!file.isFile() || !file.canRead()) {
++                // XXX: We should run through sys.path until the filename is found
++                return null;
++            }
++        } catch (SecurityException e) {
++            return null;  // If we don't have read access to the file, return null
+         }
+ 
+         PyFile pyFile;
+Index: src/org/python/core/BytecodeLoader.java
+===================================================================
+--- src/org/python/core/BytecodeLoader.java	(revision 5996)
++++ src/org/python/core/BytecodeLoader.java	(working copy)
+@@ -1,7 +1,8 @@
+ // Copyright (c) Corporation for National Research Initiatives
+ package org.python.core;
+ 
+-import java.security.SecureClassLoader;
++import java.net.URL;
++import java.net.URLClassLoader;
+ import java.util.List;
+ 
+ import org.objectweb.asm.ClassReader;
+@@ -30,7 +31,8 @@
+                 if (cur != null) {
+                     loader.addParent(cur);
+                 }
+-            } catch (SecurityException e) {}
++            } catch (SecurityException e) {
++            }
+         }
+         return loader.loadClassFromBytes(name, data);
+     }
+@@ -71,11 +73,12 @@
+         }
+     }
+ 
+-    public static class Loader extends SecureClassLoader {
++    public static class Loader extends URLClassLoader {
+ 
+         private List<ClassLoader> parents = Generic.list();
+ 
+         public Loader() {
++            super(new URL[0]);
+             parents.add(imp.getSyspathJavaLoader());
+         }
+ 
+@@ -115,7 +118,7 @@
+             }
+             Class<?> c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
+             resolveClass(c);
+-            Compiler.compileClass(c);
++            //Compiler.compileClass(c);
+             return c;
+         }
+     }
+Index: src/org/python/modules/zipimport/zipimporter.java
+===================================================================
+--- src/org/python/modules/zipimport/zipimporter.java	(revision 5996)
++++ src/org/python/modules/zipimport/zipimporter.java	(working copy)
+@@ -91,11 +91,12 @@
+         prefix = "";
+         while (true) {
+             File fullPathFile = new File(sys.getPath(pathFile.getPath()));
+-            if (fullPathFile.exists()) {
+-                if (fullPathFile.isFile()) {
+-                    archive = pathFile.getPath();
+-                }
+-                break;
++            try {
++              if (fullPathFile.isFile()) {
++                  archive = pathFile.getPath();
++                  break;
++              }
++            } catch (SecurityException se) {
+             }
+ 
+             // back up one path element

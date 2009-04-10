@@ -1,0 +1,1 @@
+This is scala built from scala's SVN repo at r????? with a patch that landed at r17051.  Scala 2.7.3 appears to work fine in AppEngine as well, although it lacks the Interpreter.reset() call that LotREPLs uses.
