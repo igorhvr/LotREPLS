@@ -31,7 +31,7 @@ import javax.servlet.ServletContext;
 public class PythonInterpreter implements Interpreter {
 
   public void init(ServletContext context) {
-    System.getProperties().setProperty("python.path", context.getRealPath("/WEB-INF/lib-python"));
+//    System.getProperties().setProperty("python.path", context.getRealPath("/WEB-INF/lib-python"));
     org.python.util.PythonInterpreter.initialize(System.getProperties(), null,
         new String[0]);
   }

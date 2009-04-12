@@ -1,0 +1,75 @@
+Index: scala/trunk/test/files/jvm5/interpreter.check
+===================================================================
+--- scala/trunk/test/files/jvm5/interpreter.check (revision 16577)
++++ scala/trunk/test/files/jvm5/interpreter.check (revision 17051)
+@@ -211,2 +211,8 @@
+ scala> 
+ scala> 
++plusOne: (Int)Int
++res0: Int = 6
++res0: java.lang.String = after reset
++<console>:5: error: not found: value plusOne
++       plusOne(5) // should be undefined now
++       ^
+Index: scala/trunk/test/files/jvm5/interpreter.scala
+===================================================================
+--- scala/trunk/test/files/jvm5/interpreter.scala (revision 16577)
++++ scala/trunk/test/files/jvm5/interpreter.scala (revision 17051)
+@@ -169,4 +169,11 @@
+     repl.main(new Settings)
+     println()
++
++    val interp = new Interpreter(new Settings)
++    interp.interpret("def plusOne(x: Int) = x + 1")
++    interp.interpret("plusOne(5)")
++    interp.reset()
++    interp.interpret("\"after reset\"")
++    interp.interpret("plusOne(5) // should be undefined now")
+   }
+ }
+Index: scala/trunk/src/compiler/scala/tools/nsc/Interpreter.scala
+===================================================================
+--- scala/trunk/src/compiler/scala/tools/nsc/Interpreter.scala (revision 17050)
++++ scala/trunk/src/compiler/scala/tools/nsc/Interpreter.scala (revision 17051)
+@@ -156,6 +156,6 @@
+          definitions.
+   */
+-  /** class loader used to load compiled code */
+-  private val classLoader = {
++  private var classLoader = makeClassLoader()
++  private def makeClassLoader(): ClassLoader = {
+     val parent =
+       if (parentClassLoader == null)
+@@ -248,5 +248,5 @@
+ 
+   /** Indent some code by the width of the scala> prompt.
+-   *  This way, compiler error messages read beettr.
++   *  This way, compiler error messages read better.
+    */
+   def indentCode(code: String) = {
+@@ -561,4 +561,13 @@
+   }
+ 
++  /** Reset this interpreter, forgetting all user-specified
++   *  requests. */
++  def reset() {
++    virtualDirectory.clear()
++    classLoader = makeClassLoader()
++    nextLineNo = 0
++    nextVarNameNo = 0
++    prevRequests.clear()
++  }
+ 
+   /** <p>
+Index: scala/trunk/src/compiler/scala/tools/nsc/io/VirtualDirectory.scala
+===================================================================
+--- scala/trunk/src/compiler/scala/tools/nsc/io/VirtualDirectory.scala (revision 16896)
++++ scala/trunk/src/compiler/scala/tools/nsc/io/VirtualDirectory.scala (revision 17051)
+@@ -66,3 +66,7 @@
+     }
+   }
++
++  def clear() {
++    files.clear();
++  }
+ }

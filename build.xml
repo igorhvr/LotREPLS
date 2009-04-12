@@ -58,19 +58,15 @@
     <copy todir="${war.dir}/WEB-INF/lib" flatten="true">
       <fileset dir="deps">
         <include name="*/*.jar"/>
-      </fileset>
-    </copy>
-    <copy todir="${war.dir}/WEB-INF/lib-python">
-      <fileset dir="deps/jython/lib-python">
-        <include name="**/*" />
-        <include name="*" />
+        <exclude name="**/*src*"/>
+        <exclude name="**/*sources*"/>
       </fileset>
     </copy>
   </target>
 
   <target name="compile.backend"
       description="Compile the application servlet code"
-      depends="copyjars">
+      depends="copyjars,gwt.checkdistro">
     <mkdir dir="${war.dir}/WEB-INF/classes"/>
     <mkdir dir="${war.dir}/WEB-INF/lib"/>
     <javac srcdir="src/com/google/lotrepls/shared"
@@ -119,7 +115,7 @@
 
   <target name="dev_appserver" depends="compile"
           description="Run the dev_appserver">
-    <dev_appserver war="${war.dir}" port="${http.port}"/>
+          <dev_appserver war="${war.dir}" port="${http.port}" address="0.0.0.0"/>
   </target>
 
   <target name="debug" depends="compile" 

@@ -1,1 +1,3 @@
-This is scala built from scala's SVN repo at r????? with a patch that landed at r17051.  Scala 2.7.3 appears to work fine in AppEngine as well, although it lacks the Interpreter.reset() call that LotREPLs uses.
+This is scala built from scala's 2.7.3 final release with a patch that landed at r17051.  Scala 2.7.3 appears to work fine in AppEngine as well, although it lacks the Interpreter.reset() call that LotREPLs uses.
+
+To rebuild, unzip scala-2.7.3.final-sources.tgz and apply the included patch with the command 'patch -p2 < scala_r17051.diff', then build with 'ant'.
