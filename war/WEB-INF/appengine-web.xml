@@ -3,7 +3,7 @@
 	<version>1</version>
   
   <system-properties>
-    <property name="python.cachedir.skip" value="true" />
+    <property name="python.home" value="WEB-INF/lib-python" />
     <property name="jruby.management.enabled" value="false" />
     <property name="os.arch" value="" />
   </system-properties>

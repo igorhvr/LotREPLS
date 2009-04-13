@@ -39,9 +39,10 @@ public class BeanShellInterpreter implements Interpreter {
     return ctx.execute(script);
   }
 
-  static class Ctx implements Context, Serializable {
+  private static final Charset UTF8 = Charset.forName("UTF-8");
+
+  static class Ctx implements Context {
     private static final long serialVersionUID = 1L;
-    private static final Charset UTF8 = Charset.forName("UTF-8");
     bsh.Interpreter interpreter;
 
     Ctx() {

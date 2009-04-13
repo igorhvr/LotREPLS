@@ -29,6 +29,7 @@ import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -67,7 +68,14 @@ public class LotREPLsApiImpl extends RemoteServiceServlet implements
     // Find the user's context for this language
     HttpServletRequest request = getThreadLocalRequest();
     HttpSession session = request.getSession();
-    Context context = (Context) session.getAttribute(type.name());
+    Context context = null;
+    try {
+      context = (Context) session.getAttribute(type.name());
+    } catch(Exception e) {
+      // If there was a deserialization error, throw the session away
+      session.removeAttribute(type.name());
+      log.log(Level.WARNING, "Could not deserialize context " + type.name(), e);
+    }
     if (context == null) {
       // If there isn't a context stored on the session, make a new one.
       // This could either mean the user hasn't entered any commands in this

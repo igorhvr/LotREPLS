@@ -4,10 +4,9 @@ Summary of changes:
 - use a URLClassLoader instead of a SecureClassLoader
 - remove Compiler.compileClass() call (it's a no-op)
 
-jython-r5996-patched-for-appengine.jar contains a build of jython at r5996 with the patches applied.
-Simply place this in your WEB-INF/lib directory to use it.
+jython-r6218-patched-src.tgz contains the source of jython svn trunk@r6218 with a patch applied to work in AppEngine.
 
-jython.patch is a patch against jython trunk at r5996.  To apply, check out the
-jython trunk@r5996 and run 'patch -p0 < jython.patch'.
+jython.patch is a patch against jython trunk at r6218.  To apply, check out the
+jython trunk@r6218 and run 'patch -p0 < jython.patch'.
 
 The patch is currently (as of 4/9/2009) in the Jython issue tracker as 1188.  It should land soon :)

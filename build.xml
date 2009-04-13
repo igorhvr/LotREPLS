@@ -61,6 +61,13 @@
         <exclude name="**/*src*"/>
         <exclude name="**/*sources*"/>
       </fileset>
+      <fileset file="${gwt.sdk.dir}/gwt-servlet.jar" />
+    </copy>
+    <copy todir="${war.dir}/WEB-INF/lib-python">
+      <fileset dir="deps/jython">
+        <include name="lib.zip"/>
+        <include name="all.pth"/>
+      </fileset>
     </copy>
   </target>
 
@@ -81,7 +88,7 @@
         <fileset dir="${war.dir}/WEB-INF/lib">
           <include name="*.jar"/>
         </fileset>
-        <fileset file="${gwt.sdk.dir}/gwt-user.jar" />
+        <fileset file="${gwt.sdk.dir}/gwt-servlet.jar" />
       </classpath>
      </javac>
      <javac srcdir="src/com/google/lotrepls/server"

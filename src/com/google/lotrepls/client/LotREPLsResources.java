@@ -32,7 +32,7 @@ public class LotREPLsResources {
         + "coding in clojure.  Supported languages include: <br/>"
         + " <br/>"
         + "<ul>"
-        + "<li>beanshell</li>"
+        + "<li>beanshell *</li>"
         + "<li>clojure</li>"
         + "<li>groovy *</li>"
         + "<li>javascript *</li>"
