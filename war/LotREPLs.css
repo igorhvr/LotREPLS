@@ -1,15 +1,16 @@
 .prompt {
-	color: #66CC66;
+  color: #66CC66;
   background-color: black;
 }
 
 .script {
-	background-color: black;
-	color: #66CC66;
-	border: 0;
-	width: 100%;
-	overflow: hidden;
-	outline: none;
+  background-color: black;
+  color: #66CC66;
+  border: 0;
+  width: 100%;
+  overflow: hidden;
+  outline: none;
+  resize: none;
 }
 
 .error {
@@ -20,13 +21,13 @@
 }
 
 .closeButton {
-	color: #66CC66;
-	background-color: black;
-	border: 1px solid;
-	border-color: green green green green;
-	display: block;
-	margin-left: auto;
-	margin-right: auto
+  color: #66CC66;
+  background-color: black;
+  border: 1px solid;
+  border-color: green green green green;
+  display: block;
+  margin-left: auto;
+  margin-right: auto
 }
 
 .motd {
@@ -36,16 +37,16 @@
 }
 
 body {
-	background-color: black;
-	color: #66CC66;
+  background-color: black;
+  color: #66CC66;
   font-family: "Courier", monospace;
   font-size: 12pt;
 }
 
 h1 {
-	font-size: 14pt;
+  font-size: 14pt;
 }
 
 h3 {
-	font-size: 9pt;
+  font-size: 9pt;
 }

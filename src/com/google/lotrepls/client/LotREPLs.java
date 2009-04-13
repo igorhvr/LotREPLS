@@ -99,7 +99,11 @@ public class LotREPLs implements EntryPoint {
 
   private class ScriptCallback implements AsyncCallback<String> {
     public void onFailure(Throwable caught) {
-      setResult("Something bad happened - click your heels three times and try again", false);
+      if (caught instanceof InterpreterException) {
+        setResult("Interpreter exception: " + caught, false);
+      } else {
+        setResult("Something bad happened - click your heels three times and try again", false);
+      }
     }
 
     public void onSuccess(String result) {
